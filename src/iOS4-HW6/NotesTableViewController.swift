@@ -12,14 +12,17 @@
 
 import UIKit
 // @TODO 4: import CoreData
+import CoreData
+
 
 class NotesTableViewController: UITableViewController, NoteDelegate {
     
     // @TODO 5: add a reference to the sharedContext
+    let managedContext = sharedContext()
     
     // @TODO: note! you'll need to change this app from using Strings to using Notes
-    var notes:[String] = []
-    // var notes:[Note] = []
+    // var notes:[String] = []
+    var notes:[Note] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,22 +31,46 @@ class NotesTableViewController: UITableViewController, NoteDelegate {
     
     // MARK: - Core Data
     
+    
     // @TODO 6: save the data to disk
     func saveData(note:String) {
-        // create a new managed object
-        // and insert it into the context
         
-        // set its attributes
+        // creates a managed object and inserts it in the context
+        let entity = NSEntityDescription.entityForName("Note", inManagedObjectContext: managedContext)
+        let noteInsert = Note(entity:entity!, insertIntoManagedObjectContext: managedContext)
         
-        // commit changes to disk
+        // sets attributes on the managed object
+        noteInsert.text = note
+        
+        // saves to disk
+        do {
+            try managedContext.save()
+            print("Saved note")
+            notes.append(noteInsert)
+            tableView.reloadData()
+            
+        } catch let error as NSError {
+            print("Could not save \(error), \(error.userInfo)")
+        }
+        
+        
     }
     
     // @TODO 7: load the data from disk
     func loadData() {
-        // create fetch request
+    
+        // creates fetch request
+        let fetchRequest = NSFetchRequest(entityName: "Note")
         
-        // ask managedcontext to make the request
-        // if successful store result
+        // asks managedContext to make the request
+        do {
+            let results = try managedContext.executeFetchRequest(fetchRequest)
+            notes = results as! [Note]
+        } catch let error as NSError {
+            print("Could not load \(error), \(error.userInfo)")
+        }
+        
+        
     }
     
     // MARK: - Note Delegate
@@ -52,8 +79,8 @@ class NotesTableViewController: UITableViewController, NoteDelegate {
         saveData(note)
         
         // @TODO: n.b. these two lines may move
-        notes.append(note)
-        tableView.reloadData()
+      //  notes.append(note)
+     //   tableView.reloadData()
     }
     
     // MARK: - Table view data source
@@ -71,10 +98,10 @@ class NotesTableViewController: UITableViewController, NoteDelegate {
 
         // @TODO: USE THIS BLOCK WITH STRING
         let note = notes[indexPath.row]
-        let minimum = min(20, note.characters.count)
-        let breakIndex = note.startIndex.advancedBy(minimum)
-        cell.textLabel?.text = note.substringToIndex(breakIndex)
-        cell.detailTextLabel?.text = note.substringFromIndex(breakIndex)
+        let minimum = min(20, note.text!.characters.count)
+        let breakIndex = note.text!.startIndex.advancedBy(minimum)
+        cell.textLabel?.text = note.text!.substringToIndex(breakIndex)
+        cell.detailTextLabel?.text = note.text!.substringFromIndex(breakIndex)
         
         // @TODO USE THIS BLOCK WITH NOTE
 //        if let text = notes[indexPath.row].text {
